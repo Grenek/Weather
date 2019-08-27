@@ -1,6 +1,7 @@
 <template>
-  <div class="home">
+  <div>
     <SearchBar />
+    
   </div>
 </template>
 <script>

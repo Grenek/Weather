@@ -2,7 +2,7 @@
   <div>
     <multiselect
       label="city"
-      track-by="city + ', ' + description"
+      track-by="city"
       placeholder="Type to search"
       open-direction="bottom"
       :options="options"
@@ -24,73 +24,38 @@
     <b-carousel
       id="carousel-1"
       v-model="slide"
-      :interval="4000"
+      :interval="0"
       controls
       indicators
-      background="#ababab"
+      background="#000000"
       img-width="1024"
       img-height="480"
       style="text-shadow: 1px 1px 2px #333;"
       @sliding-start="onSlideStart"
       @sliding-end="onSlideEnd"
     >
-      <!-- Text slides with image -->
-      <b-carousel-slide
-        caption="First slide"
-        text="Nulla vitae elit libero, a pharetra augue mollis interdum."
-        img-src="https://picsum.photos/1024/480/?image=52"
-      ></b-carousel-slide>
-
-      <!-- Slides with custom text -->
-      <b-carousel-slide img-src="https://picsum.photos/1024/480/?image=54">
-        <h1>Hello world!</h1>
-      </b-carousel-slide>
-
-      <!-- Slides with image only -->
-      <b-carousel-slide img-src="https://picsum.photos/1024/480/?image=58"></b-carousel-slide>
-
-      <!-- Slides with img slot -->
-      <!-- Note the classes .d-block and .img-fluid to prevent browser default image alignment -->
-      <b-carousel-slide>
-        <img
-          slot="img"
-          class="d-block img-fluid w-100"
-          width="1024"
-          height="480"
-          src="https://picsum.photos/1024/480/?image=55"
-          alt="image slot"
-        />
-      </b-carousel-slide>
-
-      <!-- Slide with blank fluid image to maintain slide aspect ratio -->
-      <b-carousel-slide caption="Blank Image" img-blank img-alt="Blank image">
-        <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse eros felis, tincidunt
-          a tincidunt eget, convallis vel est. Ut pellentesque ut lacus vel interdum.
-        </p>
+      <b-carousel-slide v-for="item in forecast" v-bind:key="item.id" img-blank>
+        <div class="output">{{ item.dateAndTime }}</div>
+          <WeatherIcons :lvl="item.weather" :temperature="item.temperature">
+          </WeatherIcons>
       </b-carousel-slide>
     </b-carousel>
-
-    <p class="mt-4">
-      Slide #: {{ slide }}
-      <br />
-      Sliding: {{ sliding }}
-    </p>
   </div>
 </template>
 
 <script>
+import WeatherIcons from "@/components/WeatherIcons.vue";
 import Multiselect from "vue-multiselect";
 import axios from "axios";
 
 export default {
   name: "SearchBar",
-  components: { Multiselect },
+  components: { Multiselect, WeatherIcons },
   data() {
     return {
       slide: 0,
       sliding: null,
-      weather: [],
+      forecast: [],
       options: [],
       isLoading: false
     };
@@ -131,7 +96,7 @@ export default {
       }
     },
     getWeatherForCity(city) {
-      this.weather = [];
+      this.forecast = [];
       let self = this;
       axios
         .get(`https://api.openweathermap.org/data/2.5/forecast`, {
@@ -143,7 +108,7 @@ export default {
         })
         .then(response => {
           response.data.list.forEach(item => {
-            self.weather.push({
+            self.forecast.push({
               weather: item.weather[0].main,
               temp: item.main.temp,
               dateAndTime: item.dt_txt
@@ -152,14 +117,12 @@ export default {
           this.isLoading = false;
         });
     },
-    onSlideStart(slide) {
-      this.sliding = true;
-    },
-    onSlideEnd(slide) {
-      this.sliding = false;
-    }
+    // onSlideStart(slide) {
+    //   this.sliding = true;
+    // },
+    // onSlideEnd(slide) {
+    //   this.sliding = false;
+    // }
   }
 };
 </script>
-
-<style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
