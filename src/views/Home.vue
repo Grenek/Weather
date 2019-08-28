@@ -1,5 +1,6 @@
 <template>
   <div>
+    <h2>Погода</h2>
     <SearchBar />
     
   </div>
