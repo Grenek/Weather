@@ -44,7 +44,7 @@ fieldset[disabled] .multiselect {
 .multiselect,
 .multiselect__input,
 .multiselect__single {
-  font-family: inherit;
+  font-family: 'Noto Sans', sans-serif;
   font-size: 16px;
   -ms-touch-action: manipulation;
   touch-action: manipulation;
@@ -274,7 +274,7 @@ fieldset[disabled] .multiselect {
   line-height: 16px;
   text-decoration: none;
   text-transform: none;
-  vertical-align: middle;
+  // vertical-align: middle;
   position: relative;
   cursor: pointer;
   white-space: nowrap;

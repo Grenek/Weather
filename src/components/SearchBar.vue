@@ -1,9 +1,10 @@
 <template>
   <div>
     <multiselect
+      v-model="temp"
       label="city"
       track-by="city"
-      placeholder="Type to search"
+      placeholder="Введите город"
       open-direction="bottom"
       :options="options"
       :multiple="false"
@@ -19,7 +20,7 @@
       :hide-selected="false"
       :custom-label="customLabel"
       @search-change="getInfoAndGeocode"
-      @select="getWeatherForCity"
+      @select="getTimeZone"
     >
       <span slot="noOptions"></span>
     </multiselect>
@@ -31,16 +32,14 @@
       indicators
       background="#000000"
       style="text-shadow: 1px 1px 2px #333;"
-      @sliding-start="onSlideStart"
-      @sliding-end="onSlideEnd"
     >
       <b-carousel-slide v-for="item in forecast" v-bind:key="item.id" img-blank>
         <div class="output">{{ item[0].weekday }}</div>
         <div class="weathericons d-flex justify-content-center">
-          <div v-for="i in item">
-            <div class="time">{{i.time}}</div>
+          <div v-for="i in item" v-bind:key="i.id">
+            <div class="time">{{ i.time }}</div>
             <WeatherIcons :lvl="i.weather" :temperature="i.temperature"></WeatherIcons>
-            <div class="temp">{{i.temp}}</div>
+            <div class="temp">{{ i.temp }}</div>
           </div>
         </div>
       </b-carousel-slide>
@@ -62,7 +61,9 @@ export default {
       sliding: null,
       forecast: [],
       options: [],
-      isLoading: false
+      isLoading: false,
+      timezoneOffset: 0,
+      temp: []
     };
   },
   methods: {
@@ -99,8 +100,11 @@ export default {
             this.isLoading = false;
           });
       }
+      // console.log(this.options);
     },
     getWeatherForCity(city) {
+      // console.log(this.options);
+
       this.forecast = [];
       let self = this;
       let day = [];
@@ -114,7 +118,10 @@ export default {
           }
         })
         .then(response => {
+          // console.log(response.data);
+
           response.data.list.forEach(item => {
+            // console.log(response.data);
             if (temp !== this.getWeekday(item.dt_txt)) {
               day = [];
               day.push({
@@ -133,15 +140,34 @@ export default {
                 temp: Math.round(item.main.temp - 273.15) + "°С"
               });
             }
-            // self.forecast.push({
-            //   weather: item.weather[0].main,
-            //   temp: item.main.temp,
-            //   dateAndTime: item.dt_txt,
-            //   weekday: ""
-            // });
           });
           this.isLoading = false;
         });
+      // console.log(this.options);
+    },
+
+    getTimeZone(query) {
+      // console.log(query, "query");
+      axios
+        .get(`http://api.timezonedb.com/v2.1/get-time-zone`, {
+          params: {
+            key: "C1ALDCE8BIC4",
+            format: "json",
+            by: "position",
+            lat: query.lon,
+            lng: query.lat
+          }
+        })
+        .then(response => {
+          this.timezoneOffset = response.data.gmtOffset / 3600;
+          // console.log(response.data);
+
+          // console.log(this.timezoneOffset);
+
+          // console.log(query, "axios opt");
+          this.getWeatherForCity(query);
+        });
+      // console.log(this.forecast);
     },
 
     getWeekday(date) {
@@ -160,16 +186,9 @@ export default {
     },
 
     getTime(date) {
-      let hours = new Date(date).getHours();
+      let hours = new Date(date).getHours() + this.timezoneOffset;
       let minutes = new Date(date).getMinutes();
       return `${hours}:${minutes}0`;
-    },
-
-    onSlideStart(slide) {
-      this.sliding = true;
-    },
-    onSlideEnd(slide) {
-      this.sliding = false;
     }
   }
 };
