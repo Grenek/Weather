@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2>Погода</h2>
+    <a href="/">Погода</a>
     <SearchBar />
     
   </div>

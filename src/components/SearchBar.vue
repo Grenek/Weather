@@ -21,6 +21,8 @@
       :custom-label="customLabel"
       @search-change="getInfoAndGeocode"
       @select="getTimeZone"
+      @sliding-start="onSlideStart"
+      @sliding-end="onSlideEnd"
     >
       <span slot="noOptions"></span>
     </multiselect>
@@ -51,6 +53,7 @@
 import WeatherIcons from "@/components/WeatherIcons.vue";
 import Multiselect from "vue-multiselect";
 import axios from "axios";
+var moment = require("moment");
 
 export default {
   name: "SearchBar",
@@ -72,6 +75,23 @@ export default {
     },
     customLabel({ city, description }) {
       return `${city} – ${description}`;
+    },
+
+    onSlideStart(slide) {
+      console.log("123");
+
+      // this.$router.push({
+      //   path: "/",
+      //   query: {
+      //     kek: "1",
+      //     date: moment(new Date()).format("D-MM-YYYY")
+      // lat: this.forecast.lat,
+      // lon: this.forecast.lon
+      //   }
+      // });
+    },
+    onSlideEnd(slide) {
+      alert("111");
     },
     getInfoAndGeocode(query) {
       let self = this;
@@ -100,11 +120,8 @@ export default {
             this.isLoading = false;
           });
       }
-      // console.log(this.options);
     },
     getWeatherForCity(city) {
-      // console.log(this.options);
-
       this.forecast = [];
       let self = this;
       let day = [];
@@ -118,36 +135,44 @@ export default {
           }
         })
         .then(response => {
-          // console.log(response.data);
-
           response.data.list.forEach(item => {
-            // console.log(response.data);
-            if (temp !== this.getWeekday(item.dt_txt)) {
+            let localizedTime = moment(item.dt_txt).utcOffset(
+              this.timezoneOffset
+            );
+            if (temp !== this.getWeekday(localizedTime)) {
               day = [];
               day.push({
-                weekday: this.getWeekday(item.dt_txt),
-                time: this.getTime(item.dt_txt),
+                weekday: this.getWeekday(localizedTime),
+                time: this.getTime(localizedTime),
                 weather: item.weather[0].main,
                 temp: Math.round(item.main.temp - 273.15) + "°С"
               });
               self.forecast.push(day);
-              temp = this.getWeekday(item.dt_txt);
+              temp = this.getWeekday(localizedTime);
             } else {
               day.push({
-                weekday: this.getWeekday(item.dt_txt),
-                time: this.getTime(item.dt_txt),
+                weekday: this.getWeekday(localizedTime),
+                time: this.getTime(localizedTime),
                 weather: item.weather[0].main,
                 temp: Math.round(item.main.temp - 273.15) + "°С"
               });
             }
           });
           this.isLoading = false;
+          this.$router
+            .replace({
+              path: "/",
+              query: {
+                date: moment(new Date()).format("D-MM-YYYY"),
+                lat: city.lat,
+                lon: city.lon
+              }
+            })
+            .catch(err => {});
         });
-      // console.log(this.options);
     },
 
     getTimeZone(query) {
-      // console.log(query, "query");
       axios
         .get(`http://api.timezonedb.com/v2.1/get-time-zone`, {
           params: {
@@ -159,19 +184,15 @@ export default {
           }
         })
         .then(response => {
-          this.timezoneOffset = response.data.gmtOffset / 3600;
-          // console.log(response.data);
-
-          // console.log(this.timezoneOffset);
-
-          // console.log(query, "axios opt");
+          this.timezoneOffset = response.data.gmtOffset / 3600 + 3;
           this.getWeatherForCity(query);
         });
-      // console.log(this.forecast);
     },
 
     getWeekday(date) {
-      let dayOfWeek = new Date(date).getDay();
+      let actDate = moment(date);
+      // console.log(actDate);
+      let dayOfWeek = actDate.day();
       return isNaN(dayOfWeek)
         ? null
         : [
@@ -186,9 +207,8 @@ export default {
     },
 
     getTime(date) {
-      let hours = new Date(date).getHours() + this.timezoneOffset;
-      let minutes = new Date(date).getMinutes();
-      return `${hours}:${minutes}0`;
+      let actDate = moment(date);
+      return `${actDate.hours()}:${actDate.minutes()}0`;
     }
   }
 };
