@@ -21,8 +21,6 @@
       :custom-label="customLabel"
       @search-change="getInfoAndGeocode"
       @select="getTimeZone"
-      @sliding-start="onSlideStart"
-      @sliding-end="onSlideEnd"
     >
       <span slot="noOptions"></span>
     </multiselect>
@@ -34,6 +32,8 @@
       indicators
       background="#000000"
       style="text-shadow: 1px 1px 2px #333;"
+      ref="myCarousel"
+      @sliding-start="onSlideStart"
     >
       <b-carousel-slide v-for="item in forecast" v-bind:key="item.id" img-blank>
         <div class="output">{{ item[0].weekday }}</div>
@@ -69,6 +69,67 @@ export default {
       temp: []
     };
   },
+  mounted() {
+    if (this.$route.fullPath !== "/") {
+      let path = this.$route.fullPath;
+      let day1 = this.$route.query.date;
+      let lat = this.$route.query.lat;
+      let lon = this.$route.query.lon;
+      this.forecast = [];
+      let self = this;
+      let day = [];
+      let temp = [];
+      axios
+        .get(`https://api.openweathermap.org/data/2.5/forecast`, {
+          params: {
+            lat: lat,
+            lon: lon,
+            APPID: "828beab3d73557dad05ad548fcded3ac"
+          }
+        })
+        .then(response => {
+          response.data.list.forEach(item => {
+            let localizedTime = moment(item.dt_txt).utcOffset(
+              this.timezoneOffset
+            );
+            if (temp !== this.getWeekday(localizedTime)) {
+              day = [];
+              day.push({
+                weekday: this.getWeekday(localizedTime),
+                time: this.getTime(localizedTime),
+                weather: item.weather[0].main,
+                temp: Math.round(item.main.temp - 273.15) + "°С",
+                lat: lat,
+                lon: lon
+              });
+              self.forecast.push(day);
+              temp = this.getWeekday(localizedTime);
+            } else {
+              day.push({
+                weekday: this.getWeekday(localizedTime),
+                time: this.getTime(localizedTime),
+                weather: item.weather[0].main,
+                temp: Math.round(item.main.temp - 273.15) + "°С",
+                lat: lat,
+                lon: lon
+              });
+            }
+          });
+          let tempToday = moment(new Date());
+          let tempDay = moment(day1, "D-MM-YYYY")
+          let difference = tempDay.diff(tempToday, "days");
+          this.$refs.myCarousel.index = difference;
+        });
+    }
+    // let tempDay = this.$route.query.day;
+    // let tempToday = moment(new Date());
+    // console.log(tempDay);
+
+    // let difference = this.day1.diff(tempToday, 'days')-1;
+    // console.log(difference);
+
+    // this.$refs.myCarousel.index = difference;
+  },
   methods: {
     limitText(count) {
       return `and ${count} other places`;
@@ -78,20 +139,18 @@ export default {
     },
 
     onSlideStart(slide) {
-      console.log("123");
-
-      // this.$router.push({
-      //   path: "/",
-      //   query: {
-      //     kek: "1",
-      //     date: moment(new Date()).format("D-MM-YYYY")
-      // lat: this.forecast.lat,
-      // lon: this.forecast.lon
-      //   }
-      // });
-    },
-    onSlideEnd(slide) {
-      alert("111");
+      let tempDate = moment(new Date()).add(slide, "days");
+      tempDate = tempDate.format("D-MM-YYYY");
+      this.$router
+        .replace({
+          path: "/",
+          query: {
+            date: tempDate,
+            lat: this.forecast[0][0].lat,
+            lon: this.forecast[0][0].lon
+          }
+        })
+        .catch(err => {});
     },
     getInfoAndGeocode(query) {
       let self = this;
@@ -145,7 +204,9 @@ export default {
                 weekday: this.getWeekday(localizedTime),
                 time: this.getTime(localizedTime),
                 weather: item.weather[0].main,
-                temp: Math.round(item.main.temp - 273.15) + "°С"
+                temp: Math.round(item.main.temp - 273.15) + "°С",
+                lat: city.lat,
+                lon: city.lon
               });
               self.forecast.push(day);
               temp = this.getWeekday(localizedTime);
@@ -154,7 +215,9 @@ export default {
                 weekday: this.getWeekday(localizedTime),
                 time: this.getTime(localizedTime),
                 weather: item.weather[0].main,
-                temp: Math.round(item.main.temp - 273.15) + "°С"
+                temp: Math.round(item.main.temp - 273.15) + "°С",
+                lat: city.lat,
+                lon: city.lon
               });
             }
           });
@@ -173,6 +236,8 @@ export default {
     },
 
     getTimeZone(query) {
+      console.log(query);
+
       axios
         .get(`http://api.timezonedb.com/v2.1/get-time-zone`, {
           params: {
