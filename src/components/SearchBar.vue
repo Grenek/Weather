@@ -1,7 +1,7 @@
 <template>
   <div>
     <multiselect
-      v-model="temp"
+      v-model="value"
       label="city"
       track-by="city"
       placeholder="Введите город"
@@ -10,7 +10,7 @@
       :multiple="false"
       :searchable="true"
       :loading="isLoading"
-      :clear-on-select="false"
+      :clear-on-select="true"
       :close-on-select="true"
       :options-limit="30"
       :limit="10"
@@ -38,7 +38,7 @@
       <b-carousel-slide v-for="item in forecast" v-bind:key="item.id" img-blank>
         <div class="output">{{ item[0].weekday }}</div>
         <div class="weathericons d-flex justify-content-center">
-          <div v-for="i in item" v-bind:key="i.id">
+          <div class="weatherAtTime" v-for="i in item" v-bind:key="i.id">
             <div class="time">{{ i.time }}</div>
             <WeatherIcons :lvl="i.weather" :temperature="i.temperature"></WeatherIcons>
             <div class="temp">{{ i.temp }}</div>
@@ -66,10 +66,13 @@ export default {
       options: [],
       isLoading: false,
       timezoneOffset: 0,
-      temp: []
+      temp: [],
+      value: null
     };
   },
   mounted() {
+    let carouselControl = document.querySelector(".carousel-control-prev-icon");
+    let carouselControl1 = document.querySelector(".carousel-control-next-icon");
     if (this.$route.fullPath !== "/") {
       let path = this.$route.fullPath;
       let day1 = this.$route.query.date;
@@ -79,6 +82,7 @@ export default {
       let self = this;
       let day = [];
       let temp = [];
+
       axios
         .get(`https://api.openweathermap.org/data/2.5/forecast`, {
           params: {
@@ -104,7 +108,8 @@ export default {
               });
               self.forecast.push(day);
               temp = this.getWeekday(localizedTime);
-            } else {
+            } 
+            else {
               day.push({
                 weekday: this.getWeekday(localizedTime),
                 time: this.getTime(localizedTime),
@@ -115,27 +120,46 @@ export default {
               });
             }
           });
+          
+          // выбор слайда в зависимости от введнной даты в адресе
           let tempToday = moment(new Date());
-          let tempDay = moment(day1, "D-MM-YYYY")
-          let difference = tempDay.diff(tempToday, "days");
-          this.$refs.myCarousel.index = difference;
+          let tempDay = moment(day1, "D-MM-YYYY");
+          let difference = tempDay.diff(tempToday);
+          difference = new moment.duration(difference);
+          this.$refs.myCarousel.index = Math.ceil(difference.asDays());
         });
+      axios
+        .get(`https://geocode-maps.yandex.ru/1.x/`, {
+          params: {
+            format: "json",
+            apikey: "6e44cf80-f0d5-4c6c-801b-1c11ebb8fa6f",
+            geocode: lat + "," + lon
+          }
+        })
+        .then(
+          response =>
+            (this.value = {
+              city:
+                response.data.response.GeoObjectCollection.featureMember[0]
+                  .GeoObject.metaDataProperty.GeocoderMetaData.AddressDetails
+                  .Country.AdministrativeArea.AdministrativeAreaName,
+              description:
+                response.data.response.GeoObjectCollection.featureMember[0]
+                  .GeoObject.metaDataProperty.GeocoderMetaData.AddressDetails
+                  .Country.CountryName
+            })
+        );
+    } else {
+      carouselControl.style.display = "none";
+      carouselControl1.style.display = "none";
     }
-    // let tempDay = this.$route.query.day;
-    // let tempToday = moment(new Date());
-    // console.log(tempDay);
-
-    // let difference = this.day1.diff(tempToday, 'days')-1;
-    // console.log(difference);
-
-    // this.$refs.myCarousel.index = difference;
   },
   methods: {
     limitText(count) {
       return `and ${count} other places`;
     },
     customLabel({ city, description }) {
-      return `${city} – ${description}`;
+      return `${city}, ${description}`;
     },
 
     onSlideStart(slide) {
@@ -236,7 +260,6 @@ export default {
     },
 
     getTimeZone(query) {
-      console.log(query);
 
       axios
         .get(`http://api.timezonedb.com/v2.1/get-time-zone`, {
@@ -256,7 +279,6 @@ export default {
 
     getWeekday(date) {
       let actDate = moment(date);
-      // console.log(actDate);
       let dayOfWeek = actDate.day();
       return isNaN(dayOfWeek)
         ? null
@@ -278,3 +300,4 @@ export default {
   }
 };
 </script>
+

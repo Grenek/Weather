@@ -40,18 +40,13 @@
       <div class="rain"></div>
     </div>
 
-    <div
-      v-if="lvl === 'Fog' || lvl === 'Mist' || lvl === 'Smoke'"
-      class="icon foggy"
-    >
+    <div v-if="lvl === 'Fog' || lvl === 'Mist' || lvl === 'Smoke'" class="icon foggy">
       <div class="cloud"></div>
       <div class="fog"></div>
       <div class="fog"></div>
       <div class="fog"></div>
     </div>
-    <div v-if="temperature" class="temperature">
-      {{ Math.floor(temperature - 273.15) }}°C
-    </div>
+    <div v-if="temperature" class="temperature">{{ Math.round(temperature - 273.15) }}°C</div>
   </div>
 </template>
 
@@ -61,6 +56,12 @@ export default {
   components: {},
   data() {
     return {};
+  },
+  created() {
+    let carouselControl = document.querySelector(".carousel-control-prev-icon");
+    let carouselControl1 = document.querySelector(".carousel-control-next-icon");
+    carouselControl.style.display = "flex";
+    carouselControl1.style.display = "flex";
   },
   props: {
     temperature: {

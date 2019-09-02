@@ -26,6 +26,30 @@ html *:after {
   font-size: 1em; /* control icon size here */
 }
 
+@media (min-width: 480px) {
+  .icon {
+    font-size: .25em; /* control icon size here */
+  }
+}
+
+@media (min-width: 960px) {
+  .icon {
+    font-size: .5em; /* control icon size here */
+  }
+}
+
+@media (min-width: 1440px) {
+  .icon {
+    font-size: .75em; /* control icon size here */
+  }
+}
+
+@media (min-width: 1920px) {
+  .icon {
+    font-size: 1em; /* control icon size here */
+  }
+}
+
 .cloud {
   position: absolute;
   z-index: 1;
@@ -201,7 +225,7 @@ html *:after {
   left: 50%;
   margin: -1.025em 0 0 -1.0125em;
   color: #fff;
-  list-height: 1em;
+  // list-height: 1em;
   opacity: 0.2;
   animation: spin 8s linear infinite reverse;
 }
