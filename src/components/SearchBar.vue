@@ -72,7 +72,9 @@ export default {
   },
   mounted() {
     let carouselControl = document.querySelector(".carousel-control-prev-icon");
-    let carouselControl1 = document.querySelector(".carousel-control-next-icon");
+    let carouselControl1 = document.querySelector(
+      ".carousel-control-next-icon"
+    );
     if (this.$route.fullPath !== "/") {
       let path = this.$route.fullPath;
       let day1 = this.$route.query.date;
@@ -108,8 +110,7 @@ export default {
               });
               self.forecast.push(day);
               temp = this.getWeekday(localizedTime);
-            } 
-            else {
+            } else {
               day.push({
                 weekday: this.getWeekday(localizedTime),
                 time: this.getTime(localizedTime),
@@ -120,7 +121,7 @@ export default {
               });
             }
           });
-          
+
           // выбор слайда в зависимости от введнной даты в адресе
           let tempToday = moment(new Date());
           let tempDay = moment(day1, "D-MM-YYYY");
@@ -159,7 +160,11 @@ export default {
       return `and ${count} other places`;
     },
     customLabel({ city, description }) {
-      return `${city}, ${description}`;
+      if (description !== undefined) {
+        return `${city}, ${description}`;
+      } else {
+        return `${city}`;
+      }
     },
 
     onSlideStart(slide) {
@@ -260,7 +265,6 @@ export default {
     },
 
     getTimeZone(query) {
-
       axios
         .get(`http://api.timezonedb.com/v2.1/get-time-zone`, {
           params: {
